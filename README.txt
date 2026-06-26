@@ -1,4 +1,4 @@
-# QR Forge — Chrome Extension
+// QR Forge — Chrome Extension
 ## Setup in 3 steps
 
 ### STEP 1 — Download qrcode.js (required)

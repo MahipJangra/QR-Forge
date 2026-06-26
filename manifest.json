@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "QR Forge",
+  "version": "1.0",
+  "description": "Instantly generate QR codes for URLs and Contacts. Clean, fast, no tracking.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "permissions": ["activeTab"],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

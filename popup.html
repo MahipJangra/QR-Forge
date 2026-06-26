@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QR Forge</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0c0c10;
+      --surface: #14141c;
+      --card: #1c1c28;
+      --border: #2a2a3a;
+      --accent: #e8ff47;
+      --accent2: #c8e820;
+      --text: #f0f0f8;
+      --muted: #5a5a72;
+      --success: #47ffb2;
+      --danger: #ff6b6b;
+    }
+
+    body {
+      width: 360px;
+      min-height: 480px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+      color: var(--accent);
+    }
+    .logo span { color: var(--text); }
+    .badge {
+      font-size: 9px;
+      background: var(--accent);
+      color: #000;
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-weight: 500;
+      letter-spacing: 1px;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 10px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+      position: relative;
+    }
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      background: rgba(232,255,71,0.04);
+    }
+    .tab-btn:hover:not(.active) { color: var(--text); background: var(--surface); }
+
+    /* ── Content ── */
+    .content { padding: 16px 18px; }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .field-label {
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 10px;
+    }
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--muted); }
+
+    .url-autofill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 8px 10px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .url-autofill:hover { border-color: var(--accent); }
+    .url-autofill-icon { font-size: 14px; }
+    .url-autofill-text { font-size: 10px; color: var(--muted); flex: 1; }
+    .url-autofill-text strong { color: var(--accent); display: block; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+
+    /* ── Generate Button ── */
+    .gen-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      padding: 11px;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .gen-btn:hover { background: var(--accent2); }
+    .gen-btn:active { transform: scale(0.98); }
+
+    /* ── QR Preview ── */
+    .qr-section {
+      margin-top: 16px;
+      display: none;
+      animation: fadeUp 0.3s ease;
+    }
+    .qr-section.visible { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .qr-divider {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .qr-divider::before, .qr-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .qr-divider span { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+
+    .qr-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+    #qr-container {
+      border-radius: 10px;
+      box-shadow: 0 0 0 6px #fff, 0 0 0 8px var(--border);
+      display: inline-block;
+      line-height: 0;
+    }
+    #qr-container canvas,
+    #qr-container img {
+      border-radius: 8px;
+      display: block;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .action-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 9px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .action-btn.copied { border-color: var(--success); color: var(--success); }
+
+    .status-bar {
+      margin-top: 10px;
+      font-size: 9px;
+      text-align: center;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      min-height: 14px;
+    }
+    .status-bar.ok { color: var(--success); }
+    .status-bar.err { color: var(--danger); }
+
+    /* ── Footer ── */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 8px 18px;
+      font-size: 8px;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">QR<span>Forge</span></div>
+    <div class="badge">V1.0</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="url">⬡ URL</button>
+    <button class="tab-btn" data-tab="contact">◈ Contact</button>
+  </div>
+
+  <div class="content">
+
+    <!-- URL Panel -->
+    <div class="panel active" id="panel-url">
+      <div class="url-autofill" id="autofill-btn">
+        <div class="url-autofill-icon">⚡</div>
+        <div class="url-autofill-text">
+          <strong>Auto-fill current tab</strong>
+          <span id="autofill-preview">Click to paste active page URL</span>
+        </div>
+      </div>
+      <div class="field-label">URL</div>
+      <input type="url" id="url-input" placeholder="https://example.com" />
+      <button class="gen-btn" id="url-gen-btn">Generate QR Code</button>
+    </div>
+
+    <!-- Contact Panel -->
+    <div class="panel" id="panel-contact">
+      <div class="field-label">Full Name</div>
+      <input type="text" id="c-name" placeholder="Jane Smith" />
+      <div class="field-label">Phone</div>
+      <input type="tel" id="c-phone" placeholder="+91 98765 43210" />
+      <div class="field-label">Email</div>
+      <input type="email" id="c-email" placeholder="jane@example.com" />
+      <button class="gen-btn" id="contact-gen-btn">Generate QR Code</button>
+    </div>
+
+    <!-- QR Output (shared) -->
+    <div class="qr-section" id="qr-section">
+      <div class="qr-divider"><span>YOUR QR CODE</span></div>
+      <div class="qr-wrap">
+        <div id="qr-container"></div>
+      </div>
+      <div class="action-row">
+        <button class="action-btn" id="save-btn">💾 Save PNG</button>
+        <button class="action-btn" id="copy-btn">📋 Copy</button>
+      </div>
+      <div class="status-bar" id="status"></div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <span>NO TRACKING · NO DATA STORED</span>
+    <span>QR FORGE</span>
+  </div>
+
+  <!-- QR library (local) -->
+  <script src="qrcode.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
